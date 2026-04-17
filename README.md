@@ -15,7 +15,7 @@
 ## Использование
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/vps-setup.git
+git clone https://github.com/latham5656/vps-setup.git
 cd vps-setup
 sudo bash setup.sh
 ```
@@ -23,7 +23,7 @@ sudo bash setup.sh
 Или запустить напрямую без клонирования:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/vps-setup/main/setup.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/latham5656/vps-setup/main/setup.sh | sudo bash
 ```
 
 ## После настройки
