@@ -39,8 +39,10 @@ run_step() {
 
 run_pipe_step() {
     local msg=$1 cmd=$2
-    (eval "$cmd" >> "$LOG_FILE" 2>&1) &
-    spinner $! "$msg"
+    (eval "$cmd" </dev/null >> "$LOG_FILE" 2>&1; true) &
+    local bg_pid=$!
+    spinner $bg_pid "$msg"
+    wait $bg_pid 2>/dev/null || true
 }
 
 print_header() {
@@ -92,7 +94,7 @@ run_pipe_step "Установка Fail2Ban" \
 
 section "Шаг 5/5 — Установка TrafficGuard"
 run_pipe_step "Установка TrafficGuard" \
-    "curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash"
+    "curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash -s -- </dev/null"
 
 # ── Done ───────────────────────────────────────────────────────────────────────
 
