@@ -16,8 +16,8 @@
 ## Использование
 
 ```bash
-git clone https://github.com/latham5656/vps-setup.git
-cd vps-setup
+git clone git clone https://github.com/latham5656/VPSstart.git
+cd VPSstart
 sudo bash setup.sh
 ```
 

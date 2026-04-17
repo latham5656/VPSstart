@@ -49,7 +49,7 @@ print_header() {
     clear
     echo
     echo -e "${CYAN}${BOLD}  ╔══════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}${BOLD}  ║          VPS Initial Setup               ║${NC}"
+    echo -e "${CYAN}${BOLD}  ║          Настройка VPS                   ║${NC}"
     echo -e "${CYAN}${BOLD}  ║        SSH порт: ${SSH_PORT}                    ║${NC}"
     echo -e "${CYAN}${BOLD}  ╚══════════════════════════════════════════╝${NC}"
     echo
@@ -123,51 +123,3 @@ echo -e "  ${GREEN}✓${NC}  MOTD установлен"
 echo
 echo -e "  ${YELLOW}⚠  Переподключитесь: ${CYAN}ssh user@host -p ${SSH_PORT}${NC}"
 echo
-
-# ── Menu ───────────────────────────────────────────────────────────────────────
-
-exec < /dev/tty
-
-while true; do
-    echo -e "  ${BOLD}╔══════════════════════════════════════════╗${NC}"
-    echo -e "  ${BOLD}║              Меню управления             ║${NC}"
-    echo -e "  ${BOLD}╠══════════════════════════════════════════╣${NC}"
-    echo -e "  ${BOLD}║  ${CYAN}1${BOLD}  Статус UFW                           ║${NC}"
-    echo -e "  ${BOLD}║  ${CYAN}2${BOLD}  Статус Fail2Ban                      ║${NC}"
-    echo -e "  ${BOLD}║  ${CYAN}3${BOLD}  Показать лог установки               ║${NC}"
-    echo -e "  ${BOLD}║  ${RED}0${BOLD}  Выход                                ║${NC}"
-    echo -e "  ${BOLD}╚══════════════════════════════════════════╝${NC}"
-    echo
-    printf "  Выберите пункт: "
-    read -r choice
-
-    case $choice in
-        1)
-            echo
-            echo -e "  ${CYAN}${BOLD}— Статус UFW —${NC}"
-            ufw status | sed 's/^/  /'
-            echo
-            ;;
-        2)
-            echo
-            echo -e "  ${CYAN}${BOLD}— Статус Fail2Ban (sshd) —${NC}"
-            fail2ban-client status sshd 2>/dev/null | sed 's/^/  /' || echo -e "  ${YELLOW}Fail2Ban не запущен${NC}"
-            echo
-            ;;
-        3)
-            echo
-            echo -e "  ${CYAN}${BOLD}— Лог установки —${NC}"
-            cat "$LOG_FILE" | sed 's/^/  /'
-            echo
-            ;;
-        0)
-            echo
-            echo -e "  ${GREEN}До свидания!${NC}"
-            echo
-            exit 0
-            ;;
-        *)
-            echo -e "\n  ${RED}Неверный выбор, попробуйте снова.${NC}\n"
-            ;;
-    esac
-done
