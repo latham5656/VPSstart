@@ -89,11 +89,6 @@ run_step "Установка и настройка файрвола" bash -c "
 section "Шаг 4/5 — Установка Fail2Ban"
 run_pipe_step "Установка Fail2Ban" \
     "bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
-if [ -f /etc/fail2ban/jail.d/sshd.local ]; then
-    sed -i "s/^port\s*=\s*ssh/port    = $SSH_PORT/" /etc/fail2ban/jail.d/sshd.local
-    systemctl restart fail2ban >> "$LOG_FILE" 2>&1
-    printf "  ${GREEN}✓${NC}  %-50s\n" "Fail2Ban настроен на порт $SSH_PORT"
-fi
 
 section "Шаг 5/5 — Установка TrafficGuard"
 run_pipe_step "Установка TrafficGuard" \
