@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(curl -fsSL https://raw.githubusercontent.com/distillium/motd/refs/heads/main/install-motd.sh)"
+      "Bash(curl -fsSL https://raw.githubusercontent.com/distillium/motd/refs/heads/main/install-motd.sh)",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh)"
     ]
   }
 }

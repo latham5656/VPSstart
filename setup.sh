@@ -93,8 +93,15 @@ run_pipe_step "Установка Fail2Ban" \
     "bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
 
 section "Шаг 5/6 — Установка TrafficGuard"
-run_pipe_step "Установка TrafficGuard" \
-    "curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash -s -- </dev/null"
+apt-get install -y expect >> "$LOG_FILE" 2>&1
+printf "  ${CYAN}⠋${NC}  Установка TrafficGuard (может занять время)...\n"
+expect >> "$LOG_FILE" 2>&1 << 'EXPECT_EOF'
+set timeout 300
+spawn bash -c {curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash}
+expect "Ваш выбор:" { send "0\r" }
+expect eof
+EXPECT_EOF
+printf "  ${GREEN}✓${NC}  %-50s\n" "TrafficGuard установлен"
 
 section "Шаг 6/6 — Установка MOTD"
 run_pipe_step "Установка MOTD" \
@@ -118,6 +125,8 @@ echo -e "  ${YELLOW}⚠  Переподключитесь: ${CYAN}ssh user@host 
 echo
 
 # ── Menu ───────────────────────────────────────────────────────────────────────
+
+exec < /dev/tty
 
 while true; do
     echo -e "  ${BOLD}╔══════════════════════════════════════════╗${NC}"
