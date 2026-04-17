@@ -1,18 +1,18 @@
-# VPS Initial Setup
+# Начальная настройка VPS
 
-One-command VPS hardening script for Debian/Ubuntu.
+Скрипт для защиты VPS на Debian/Ubuntu одной командой.
 
-## What it does
+## Что делает скрипт
 
-| Step | Action |
-|------|--------|
+| Шаг | Действие |
+|-----|----------|
 | 1 | `apt update && apt upgrade && apt autoremove` |
-| 2 | Change SSH port → **4893** |
-| 3 | Install UFW, allow port 4893, enable firewall |
-| 4 | Install & configure [Fail2Ban for SSH](https://github.com/OMchik33/LightVPS/blob/main/inst_fail2ban_ssh.sh) |
-| 5 | Install [TrafficGuard](https://github.com/DonMatteoVPN/TrafficGuard-auto) |
+| 2 | Смена порта SSH → **4893** |
+| 3 | Установка UFW, разрешение порта 4893, включение файрвола |
+| 4 | Установка и настройка [Fail2Ban для SSH](https://github.com/OMchik33/LightVPS/blob/main/inst_fail2ban_ssh.sh) |
+| 5 | Установка [TrafficGuard](https://github.com/DonMatteoVPN/TrafficGuard-auto) |
 
-## Usage
+## Использование
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/vps-setup.git
@@ -20,29 +20,29 @@ cd vps-setup
 sudo bash setup.sh
 ```
 
-Or run directly without cloning:
+Или запустить напрямую без клонирования:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/vps-setup/main/setup.sh | sudo bash
 ```
 
-## After setup
+## После настройки
 
-Reconnect via SSH on the new port:
+Переподключитесь по SSH на новый порт:
 
 ```bash
 ssh user@your-server -p 4893
 ```
 
-Check firewall and Fail2Ban status:
+Проверьте статус файрвола и Fail2Ban:
 
 ```bash
 ufw status
 fail2ban-client status sshd
 ```
 
-## Requirements
+## Требования
 
-- Debian 11+ or Ubuntu 20.04+
-- Root access (`sudo`)
-- Internet connection
+- Debian 11+ или Ubuntu 20.04+
+- Права root (`sudo`)
+- Подключение к интернету
