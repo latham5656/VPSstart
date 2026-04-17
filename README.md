@@ -23,7 +23,7 @@ sudo bash setup.sh
 Или запустить напрямую без клонирования:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/latham5656/vps-setup/main/setup.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/latham5656/VPSstart/refs/heads/main/setup.sh | sudo bash
 ```
 
 ## После настройки
