@@ -5,33 +5,70 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
 NC='\033[0m'
 
-log()  { echo -e "${GREEN}[✓] $1${NC}"; }
-info() { echo -e "${CYAN}[*] $1${NC}"; }
-warn() { echo -e "${YELLOW}[!] $1${NC}"; }
-err()  { echo -e "${RED}[✗] $1${NC}"; exit 1; }
-
-[ "$EUID" -ne 0 ] && err "Run as root: sudo bash setup.sh"
+[ "$EUID" -ne 0 ] && echo -e "${RED}[✗] Запустите от root: sudo bash setup.sh${NC}" && exit 1
 
 SSH_PORT=4893
+LOG_FILE="/tmp/vps-setup.log"
+> "$LOG_FILE"
 
-echo -e "${CYAN}"
-echo "╔══════════════════════════════════════╗"
-echo "║         VPS Initial Setup            ║"
-echo "║     SSH port: $SSH_PORT               ║"
-echo "╚══════════════════════════════════════╝"
-echo -e "${NC}"
+# ── Helpers ────────────────────────────────────────────────────────────────────
 
-# ── Step 1: System update ──────────────────────────────────────────────────────
-info "Step 1/5 — Updating system..."
-apt update -y && apt upgrade -y && apt autoremove -y
-log "System updated"
+spinner() {
+    local pid=$1 msg=$2
+    local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+    local i=0
+    tput civis
+    while kill -0 "$pid" 2>/dev/null; do
+        printf "\r  ${CYAN}${frames[$i]}${NC}  %s" "$msg"
+        i=$(( (i+1) % ${#frames[@]} ))
+        sleep 0.1
+    done
+    tput cnorm
+    printf "\r  ${GREEN}✓${NC}  %-50s\n" "$msg"
+}
 
-# ── Step 2: Change SSH port ────────────────────────────────────────────────────
-info "Step 2/5 — Changing SSH port to $SSH_PORT..."
+run_step() {
+    local msg=$1; shift
+    ("$@" >> "$LOG_FILE" 2>&1) &
+    spinner $! "$msg"
+}
+
+run_pipe_step() {
+    local msg=$1 cmd=$2
+    (eval "$cmd" >> "$LOG_FILE" 2>&1) &
+    spinner $! "$msg"
+}
+
+print_header() {
+    clear
+    echo
+    echo -e "${CYAN}${BOLD}  ╔══════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}${BOLD}  ║          VPS Initial Setup               ║${NC}"
+    echo -e "${CYAN}${BOLD}  ║        SSH порт: ${SSH_PORT}                    ║${NC}"
+    echo -e "${CYAN}${BOLD}  ╚══════════════════════════════════════════╝${NC}"
+    echo
+}
+
+section() {
+    echo
+    echo -e "  ${BLUE}${BOLD}▸ $1${NC}"
+}
+
+# ── Installation ───────────────────────────────────────────────────────────────
+
+print_header
+echo -e "  ${YELLOW}Установка началась, подождите...${NC}"
+echo
+
+section "Шаг 1/5 — Обновление системы"
+run_step "apt update и upgrade" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
+
+section "Шаг 2/5 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
-
 if grep -qE "^Port\s" "$SSHD_CONFIG"; then
     sed -i "s/^Port\s.*/Port $SSH_PORT/" "$SSHD_CONFIG"
 elif grep -qE "^#Port\s" "$SSHD_CONFIG"; then
@@ -39,46 +76,87 @@ elif grep -qE "^#Port\s" "$SSHD_CONFIG"; then
 else
     echo "Port $SSH_PORT" >> "$SSHD_CONFIG"
 fi
+printf "  ${GREEN}✓${NC}  %-50s\n" "Порт SSH изменён на $SSH_PORT"
 
-warn "SSH port changed to $SSH_PORT — your current session will stay active."
-warn "Reconnect using: ssh user@host -p $SSH_PORT"
+section "Шаг 3/5 — Установка UFW"
+run_step "Установка и настройка файрвола" bash -c "
+    apt install -y ufw
+    ufw allow ${SSH_PORT}/tcp comment 'SSH custom port'
+    ufw --force enable
+    systemctl restart sshd
+"
 
-# ── Step 3: UFW ────────────────────────────────────────────────────────────────
-info "Step 3/5 — Installing UFW and opening port $SSH_PORT..."
-apt install -y ufw
-
-ufw allow "$SSH_PORT/tcp" comment "SSH custom port"
-ufw --force enable
-log "UFW enabled, port $SSH_PORT allowed"
-
-# Restart SSH only after UFW is up
-systemctl restart sshd
-log "SSH restarted on port $SSH_PORT"
-
-# ── Step 4: Fail2Ban ───────────────────────────────────────────────────────────
-info "Step 4/5 — Installing Fail2Ban..."
-bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)
-
-# Patch jail to use the actual SSH port instead of the default 'ssh' alias
+section "Шаг 4/5 — Установка Fail2Ban"
+run_pipe_step "Установка Fail2Ban" \
+    "bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
 if [ -f /etc/fail2ban/jail.d/sshd.local ]; then
     sed -i "s/^port\s*=\s*ssh/port    = $SSH_PORT/" /etc/fail2ban/jail.d/sshd.local
-    systemctl restart fail2ban
-    log "Fail2Ban reconfigured for port $SSH_PORT"
+    systemctl restart fail2ban >> "$LOG_FILE" 2>&1
+    printf "  ${GREEN}✓${NC}  %-50s\n" "Fail2Ban настроен на порт $SSH_PORT"
 fi
 
-# ── Step 5: TrafficGuard ───────────────────────────────────────────────────────
-info "Step 5/5 — Installing TrafficGuard..."
-curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash
-log "TrafficGuard installed"
+section "Шаг 5/5 — Установка TrafficGuard"
+run_pipe_step "Установка TrafficGuard" \
+    "curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash"
 
 # ── Done ───────────────────────────────────────────────────────────────────────
+
+clear
+print_header
+echo -e "  ${GREEN}${BOLD}Установка завершена успешно!${NC}"
 echo
-echo -e "${GREEN}╔══════════════════════════════════════╗"
-echo -e "║          Setup complete!             ║"
-echo -e "╚══════════════════════════════════════╝${NC}"
+echo -e "  ${BOLD}Статус системы:${NC}"
+echo -e "  ${GREEN}✓${NC}  Система обновлена"
+echo -e "  ${GREEN}✓${NC}  SSH порт изменён → ${CYAN}${BOLD}${SSH_PORT}${NC}"
+echo -e "  ${GREEN}✓${NC}  UFW файрвол активен"
+echo -e "  ${GREEN}✓${NC}  Fail2Ban установлен и настроен"
+echo -e "  ${GREEN}✓${NC}  TrafficGuard установлен"
 echo
-echo -e "  SSH port  : ${CYAN}$SSH_PORT${NC}"
-echo -e "  Firewall  : ${CYAN}ufw status${NC}"
-echo -e "  Fail2Ban  : ${CYAN}fail2ban-client status sshd${NC}"
+echo -e "  ${YELLOW}⚠  Переподключитесь: ${CYAN}ssh user@host -p ${SSH_PORT}${NC}"
 echo
-warn "Don't forget to reconnect on port $SSH_PORT"
+
+# ── Menu ───────────────────────────────────────────────────────────────────────
+
+while true; do
+    echo -e "  ${BOLD}╔══════════════════════════════════════════╗${NC}"
+    echo -e "  ${BOLD}║              Меню управления             ║${NC}"
+    echo -e "  ${BOLD}╠══════════════════════════════════════════╣${NC}"
+    echo -e "  ${BOLD}║  ${CYAN}1${BOLD}  Статус UFW                           ║${NC}"
+    echo -e "  ${BOLD}║  ${CYAN}2${BOLD}  Статус Fail2Ban                      ║${NC}"
+    echo -e "  ${BOLD}║  ${CYAN}3${BOLD}  Показать лог установки               ║${NC}"
+    echo -e "  ${BOLD}║  ${RED}0${BOLD}  Выход                                ║${NC}"
+    echo -e "  ${BOLD}╚══════════════════════════════════════════╝${NC}"
+    echo
+    printf "  Выберите пункт: "
+    read -r choice
+
+    case $choice in
+        1)
+            echo
+            echo -e "  ${CYAN}${BOLD}— Статус UFW —${NC}"
+            ufw status | sed 's/^/  /'
+            echo
+            ;;
+        2)
+            echo
+            echo -e "  ${CYAN}${BOLD}— Статус Fail2Ban (sshd) —${NC}"
+            fail2ban-client status sshd 2>/dev/null | sed 's/^/  /' || echo -e "  ${YELLOW}Fail2Ban не запущен${NC}"
+            echo
+            ;;
+        3)
+            echo
+            echo -e "  ${CYAN}${BOLD}— Лог установки —${NC}"
+            cat "$LOG_FILE" | sed 's/^/  /'
+            echo
+            ;;
+        0)
+            echo
+            echo -e "  ${GREEN}До свидания!${NC}"
+            echo
+            exit 0
+            ;;
+        *)
+            echo -e "\n  ${RED}Неверный выбор, попробуйте снова.${NC}\n"
+            ;;
+    esac
+done
