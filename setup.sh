@@ -67,7 +67,7 @@ echo -e "  ${YELLOW}Установка началась, подождите...${
 echo
 
 section "Шаг 1/6 — Обновление системы"
-run_step "apt update и upgrade" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
+run_step "Обновляю систему" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
 
 section "Шаг 2/6 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
