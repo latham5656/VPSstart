@@ -11,6 +11,7 @@
 | 3 | Установка UFW, разрешение порта 4893, включение файрвола |
 | 4 | Установка и настройка [Fail2Ban для SSH](https://github.com/OMchik33/LightVPS/blob/main/inst_fail2ban_ssh.sh) |
 | 5 | Установка [TrafficGuard](https://github.com/DonMatteoVPN/TrafficGuard-auto) |
+| 6 | Установка [MOTD](https://github.com/distillium/motd) |
 
 ## Использование
 

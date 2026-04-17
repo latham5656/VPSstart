@@ -66,10 +66,10 @@ print_header
 echo -e "  ${YELLOW}Установка началась, подождите...${NC}"
 echo
 
-section "Шаг 1/5 — Обновление системы"
+section "Шаг 1/6 — Обновление системы"
 run_step "apt update и upgrade" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
 
-section "Шаг 2/5 — Смена SSH порта"
+section "Шаг 2/6 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
 if grep -qE "^Port\s" "$SSHD_CONFIG"; then
     sed -i "s/^Port\s.*/Port $SSH_PORT/" "$SSHD_CONFIG"
@@ -80,7 +80,7 @@ else
 fi
 printf "  ${GREEN}✓${NC}  %-50s\n" "Порт SSH изменён на $SSH_PORT"
 
-section "Шаг 3/5 — Установка UFW"
+section "Шаг 3/6 — Установка UFW"
 run_step "Установка и настройка файрвола" bash -c "
     apt install -y ufw
     ufw allow ${SSH_PORT}/tcp comment 'SSH custom port'
@@ -88,13 +88,17 @@ run_step "Установка и настройка файрвола" bash -c "
     systemctl restart sshd
 "
 
-section "Шаг 4/5 — Установка Fail2Ban"
+section "Шаг 4/6 — Установка Fail2Ban"
 run_pipe_step "Установка Fail2Ban" \
     "bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
 
-section "Шаг 5/5 — Установка TrafficGuard"
+section "Шаг 5/6 — Установка TrafficGuard"
 run_pipe_step "Установка TrafficGuard" \
     "curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash -s -- </dev/null"
+
+section "Шаг 6/6 — Установка MOTD"
+run_pipe_step "Установка MOTD" \
+    "curl -fsSL https://raw.githubusercontent.com/distillium/motd/refs/heads/main/install-motd.sh -o /tmp/install-motd.sh && sed -i '/^[[:space:]]*select_language$/d' /tmp/install-motd.sh && bash /tmp/install-motd.sh"
 
 # ── Done ───────────────────────────────────────────────────────────────────────
 
@@ -108,6 +112,7 @@ echo -e "  ${GREEN}✓${NC}  SSH порт изменён → ${CYAN}${BOLD}${SSH
 echo -e "  ${GREEN}✓${NC}  UFW файрвол активен"
 echo -e "  ${GREEN}✓${NC}  Fail2Ban установлен и настроен"
 echo -e "  ${GREEN}✓${NC}  TrafficGuard установлен"
+echo -e "  ${GREEN}✓${NC}  MOTD установлен"
 echo
 echo -e "  ${YELLOW}⚠  Переподключитесь: ${CYAN}ssh user@host -p ${SSH_PORT}${NC}"
 echo
