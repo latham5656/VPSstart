@@ -67,7 +67,7 @@ echo -e "  ${YELLOW}Установка началась, подождите...${
 echo
 
 section "Шаг 1/7 — Обновление системы"
-run_step "Обновляю систему" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
+run_step "Обновляю систему" bash -c "DEBIAN_FRONTEND=noninteractive apt update -y && DEBIAN_FRONTEND=noninteractive apt upgrade -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' && DEBIAN_FRONTEND=noninteractive apt autoremove -y"
 
 section "Шаг 2/7 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
