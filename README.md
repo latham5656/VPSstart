@@ -25,6 +25,7 @@
 | 4️⃣ | **Fail2Ban** | Устанавливает и настраивает [Fail2Ban для SSH](https://github.com/OMchik33/LightVPS/blob/main/inst_fail2ban_ssh.sh) |
 | 5️⃣ | **TrafficGuard** | Устанавливает [TrafficGuard](https://github.com/DonMatteoVPN/TrafficGuard-auto) для защиты трафика |
 | 6️⃣ | **MOTD** | Устанавливает красивый [MOTD](https://github.com/distillium/motd) при входе |
+| 7️⃣ | **UFW Manager** | Устанавливает [UFW Manager](https://github.com/latham5656/ufw-manager) — удобное управление правилами файрвола |
 
 ---
 
@@ -59,6 +60,12 @@ ssh user@your-server -p 4893
 ```bash
 ufw status
 fail2ban-client status sshd
+```
+
+Для управления правилами UFW запустите UFW Manager:
+
+```bash
+ufw-manager
 ```
 
 ---
