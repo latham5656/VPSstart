@@ -101,7 +101,7 @@ run_pipe_step "Установка Fail2Ban" \
 section "Шаг 5/6 — Установка TrafficGuard"
 DEBIAN_FRONTEND=noninteractive apt-get install -y expect >> "$LOG_FILE" 2>&1
 printf "  ${CYAN}⠋${NC}  Установка TrafficGuard (может занять время)...\n"
-expect >> "$LOG_FILE" 2>&1 << 'EXPECT_EOF'
+expect >> "$LOG_FILE" 2>&1 << 'EXPECT_EOF' || true
 set timeout 300
 spawn bash -c {curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash}
 expect "Ваш выбор:" { send "0\r" }
