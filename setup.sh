@@ -45,14 +45,6 @@ run_pipe_step() {
     wait $bg_pid 2>/dev/null || true
 }
 
-# Запускает команду в foreground — вывод и диалоги видны пользователю
-run_live_step() {
-    local msg=$1; shift
-    echo -e "  ${CYAN}⠋${NC}  $msg"
-    "$@" 2>&1 | tee -a "$LOG_FILE"
-    printf "  ${GREEN}✓${NC}  %-50s\n" "$msg"
-}
-
 print_header() {
     clear
     echo
@@ -74,16 +66,10 @@ print_header
 echo -e "  ${YELLOW}Установка началась, подождите...${NC}"
 echo
 
-section "Шаг 1/7 — Обновление системы"
-run_live_step "Обновляю систему" bash -c "
-    DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none apt update -y
-    DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none apt upgrade -y \
-        -o Dpkg::Options::='--force-confdef' \
-        -o Dpkg::Options::='--force-confold'
-    DEBIAN_FRONTEND=noninteractive apt autoremove -y
-"
+section "Шаг 1/6 — Обновление системы"
+run_step "Обновляю систему" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
 
-section "Шаг 2/7 — Смена SSH порта"
+section "Шаг 2/6 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
 if grep -qE "^Port\s" "$SSHD_CONFIG"; then
     sed -i "s/^Port\s.*/Port $SSH_PORT/" "$SSHD_CONFIG"
@@ -94,7 +80,7 @@ else
 fi
 printf "  ${GREEN}✓${NC}  %-50s\n" "Порт SSH изменён на $SSH_PORT"
 
-section "Шаг 3/7 — Установка UFW"
+section "Шаг 3/6 — Установка UFW"
 run_step "Установка и настройка файрвола" bash -c "
     apt install -y ufw
     ufw allow ${SSH_PORT}/tcp comment 'SSH custom port'
@@ -102,33 +88,24 @@ run_step "Установка и настройка файрвола" bash -c "
     systemctl restart sshd
 "
 
-section "Шаг 4/7 — Установка Fail2Ban"
+section "Шаг 4/6 — Установка Fail2Ban"
 run_pipe_step "Установка Fail2Ban" \
-    "DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
+    "bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
 
-section "Шаг 5/7 — Установка TrafficGuard"
+section "Шаг 5/6 — Установка TrafficGuard"
 apt-get install -y expect >> "$LOG_FILE" 2>&1
 printf "  ${CYAN}⠋${NC}  Установка TrafficGuard (может занять время)...\n"
 expect >> "$LOG_FILE" 2>&1 << 'EXPECT_EOF'
 set timeout 300
 spawn bash -c {curl -fsSL https://raw.githubusercontent.com/DonMatteoVPN/TrafficGuard-auto/refs/heads/main/install-trafficguard.sh | bash}
-expect {
-    "Ваш выбор:"   { send "0\r"; exp_continue }
-    "Your choice:" { send "0\r"; exp_continue }
-    "choice:"      { send "0\r"; exp_continue }
-    eof            { }
-    timeout        { }
-}
+expect "Ваш выбор:" { send "0\r" }
+expect eof
 EXPECT_EOF
 printf "  ${GREEN}✓${NC}  %-50s\n" "TrafficGuard установлен"
 
-section "Шаг 6/7 — Установка MOTD"
+section "Шаг 6/6 — Установка MOTD"
 run_pipe_step "Установка MOTD" \
     "curl -fsSL https://raw.githubusercontent.com/distillium/motd/refs/heads/main/install-motd.sh -o /tmp/install-motd.sh && sed -i '/^[[:space:]]*select_language$/d' /tmp/install-motd.sh && bash /tmp/install-motd.sh"
-
-section "Шаг 7/7 — Установка UFW Manager"
-run_pipe_step "Установка UFW Manager" \
-    "bash <(curl -fsSL https://raw.githubusercontent.com/latham5656/ufw-manager/refs/heads/master/install.sh)"
 
 # ── Done ───────────────────────────────────────────────────────────────────────
 
@@ -143,7 +120,6 @@ echo -e "  ${GREEN}✓${NC}  UFW файрвол активен"
 echo -e "  ${GREEN}✓${NC}  Fail2Ban установлен и настроен"
 echo -e "  ${GREEN}✓${NC}  TrafficGuard установлен"
 echo -e "  ${GREEN}✓${NC}  MOTD установлен"
-echo -e "  ${GREEN}✓${NC}  UFW Manager установлен"
 echo
 echo -e "  ${YELLOW}⚠  Переподключитесь: ${CYAN}ssh user@host -p ${SSH_PORT}${NC}"
 echo
