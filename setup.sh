@@ -11,6 +11,9 @@ NC='\033[0m'
 
 [ "$EUID" -ne 0 ] && echo -e "${RED}[✗] Запустите от root: sudo bash setup.sh${NC}" && exit 1
 
+export DEBIAN_FRONTEND=noninteractive
+export APT_LISTCHANGES_FRONTEND=none
+
 SSH_PORT=4893
 LOG_FILE="/tmp/vps-setup.log"
 > "$LOG_FILE"
@@ -67,7 +70,7 @@ echo -e "  ${YELLOW}Установка началась, подождите...${
 echo
 
 section "Шаг 1/7 — Обновление системы"
-run_step "Обновляю систему" bash -c "DEBIAN_FRONTEND=noninteractive apt update -y && DEBIAN_FRONTEND=noninteractive apt upgrade -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' && DEBIAN_FRONTEND=noninteractive apt autoremove -y"
+run_step "Обновляю систему" bash -c "apt update -y && apt upgrade -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' && apt autoremove -y"
 
 section "Шаг 2/7 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
@@ -90,7 +93,7 @@ run_step "Установка и настройка файрвола" bash -c "
 
 section "Шаг 4/7 — Установка Fail2Ban"
 run_pipe_step "Установка Fail2Ban" \
-    "DEBIAN_FRONTEND=noninteractive bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
+    "bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
 
 section "Шаг 5/7 — Установка TrafficGuard"
 apt-get install -y expect >> "$LOG_FILE" 2>&1
