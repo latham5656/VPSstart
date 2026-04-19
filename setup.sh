@@ -67,7 +67,13 @@ echo -e "  ${YELLOW}Установка началась, подождите...${
 echo
 
 section "Шаг 1/6 — Обновление системы"
-run_step "Обновляю систему" bash -c "apt update -y && apt upgrade -y && apt autoremove -y"
+BOOT_DISK=$(lsblk -ndo pkname "$(findmnt -n -o SOURCE /)" 2>/dev/null | head -1)
+[ -z "$BOOT_DISK" ] && BOOT_DISK=$(lsblk -ndo name,TYPE 2>/dev/null | awk '$2=="disk"{print $1; exit}')
+if [ -n "$BOOT_DISK" ]; then
+    echo "grub-pc grub-pc/install_devices multiselect /dev/${BOOT_DISK}" | debconf-set-selections
+    echo "grub-pc grub-pc/install_devices_empty boolean false" | debconf-set-selections
+fi
+run_step "Обновляю систему" bash -c "DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none apt update -y && DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none apt upgrade -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' && DEBIAN_FRONTEND=noninteractive apt autoremove -y"
 
 section "Шаг 2/6 — Смена SSH порта"
 SSHD_CONFIG="/etc/ssh/sshd_config"
