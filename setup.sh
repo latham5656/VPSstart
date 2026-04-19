@@ -99,7 +99,7 @@ run_pipe_step "Установка Fail2Ban" \
     "DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none bash <(curl -fsSL https://raw.githubusercontent.com/OMchik33/LightVPS/main/inst_fail2ban_ssh.sh)"
 
 section "Шаг 5/6 — Установка TrafficGuard"
-apt-get install -y expect >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt-get install -y expect >> "$LOG_FILE" 2>&1
 printf "  ${CYAN}⠋${NC}  Установка TrafficGuard (может занять время)...\n"
 expect >> "$LOG_FILE" 2>&1 << 'EXPECT_EOF'
 set timeout 300
