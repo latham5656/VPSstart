@@ -96,7 +96,7 @@ run_step "Установка и настройка файрвола" bash -c "
 
 section "Шаг 4/6 — Установка Fail2Ban"
 run_pipe_step "Установка Fail2Ban" \
-    "bash <(curl -fsSL https://raw.githubusercontent.com/latham5656/VPSstart/main/setup_fail2ban.sh)"
+    "bash <(curl -fsSL https://raw.githubusercontent.com/latham5656/VPSstart/refs/heads/main/setup_fail2ban.sh)"
 
 section "Шаг 5/7 — Установка TrafficGuard"
 DEBIAN_FRONTEND=noninteractive apt-get install -y expect >> "$LOG_FILE" 2>&1
